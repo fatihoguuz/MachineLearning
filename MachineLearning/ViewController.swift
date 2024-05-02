@@ -37,7 +37,31 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate,UINaviga
         recognizeImage(image: chosenImage)
     }
     func recognizeImage(image: CIImage){
-        
+        resultLabel.text = "Finding..."
+        if let model = try? VNCoreMLModel(for: MobileNetV2().model) {
+            let request = VNCoreMLRequest(model: model) { vnrequest, error in
+                if let results = vnrequest.results as? [VNClassificationObservation]{
+                    let topResult = results.first
+                    DispatchQueue.main.async {
+                        let confidenceLevel = (topResult?.confidence ?? 0) * 100
+                        let rounded = Int (confidenceLevel * 100) / 100
+                            self.resultLabel.text = "\(rounded)% it's \(topResult!.identifier)"
+                        }
+                    }
+                }
+            
+            let handler = VNImageRequestHandler(ciImage: image)
+            DispatchQueue.global(qos: .userInteractive).async {
+                do {
+                    try handler.perform([request])
+                }catch {
+                    print("error")
+                }
+            }
+            }
+            
+            
+        }
     }
-}
+
 
